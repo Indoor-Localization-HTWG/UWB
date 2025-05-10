@@ -6,6 +6,9 @@ class LogProcessor(UWBProcessor):
 	name = "log"
 	help = "Schreibt den Seriellen Output der UWB Module in die Konsole"
 
+	def __init__(self, args):
+		super().__init__(args)
+
 	@classmethod
 	def cli(cls, parser):
 		...

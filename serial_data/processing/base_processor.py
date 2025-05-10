@@ -5,6 +5,9 @@ class UWBProcessor(ABC):
 	name: str = "base"
 	help: str = "Base processor (not usable directly)"
 
+	def __init__(self, args):
+		self.args = args
+
 	@classmethod
 	def add_cli(cls, subparsers: argparse._SubParsersAction) -> None:
 		parser: argparse.ArgumentParser = subparsers.add_parser(cls.name, help=cls.help, description=cls.help)

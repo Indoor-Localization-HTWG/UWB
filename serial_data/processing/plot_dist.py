@@ -11,13 +11,8 @@ class PlotDistProcessor(UWBProcessor):
 	name = "plot"
 	help = "Plottet die Distanzmessungen live auf einen Graph"
 
-	@classmethod
-	def cli(cls, parser):
-		parser.add_argument("--max_points", type=int)
-		parser.add_argument("--max_y", type=int)
-
 	def __init__(self, args):
-		self.args = args
+		super().__init__(args)
 		self.pattern = re.compile(r'\[mac_address=(0x[0-9a-fA-F]+), status="SUCCESS", distance\[cm\]=(-?\d+)\]')
 		self.distance_history = defaultdict(lambda: deque(maxlen=args.max_points))
 		self.data_lock = threading.Lock()
@@ -25,6 +20,11 @@ class PlotDistProcessor(UWBProcessor):
 		self.fig, self.ax = plt.subplots()
 		plt.ion()
 		plt.show()
+
+	@classmethod
+	def cli(cls, parser):
+		parser.add_argument("--max_points", type=int, default=100)
+		parser.add_argument("--max_y", type=int, default=150)
 
 	def on_data(self, i: int, line: str):
 		match = self.pattern.match(line)

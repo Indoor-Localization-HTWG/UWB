@@ -9,11 +9,16 @@ ports = serial.tools.list_ports.comports()
 devices = [port.device for port in ports if port.serial_number in serial_nrs]
 stop_event = threading.Event()
 
+from processing import *
+
+def get_processors() -> list[UWBProcessor]:
+	return [PlotDistProcessor, LogProcessor]
+
 def start(baud: int = 115200, timeout: int = 1):
 	threads = start_threads(baud, timeout)
 	
 	try:
-		while any(t.is_alive() for t in threads):
+		while any(t.is_alive() for t in threads) and not stop_event.is_set():
 			processor.main()
 	except KeyboardInterrupt:
 		print("[GLOBAL] Stoppe Threads")
@@ -68,14 +73,11 @@ if __name__ == '__main__':
 
 	subparsers = parser.add_subparsers(dest="command", required=True)
 
-	from processing import *
-
-	for proc_cls in [PlotDistProcessor, LogProcessor]:
-		proc_cls: UWBProcessor
+	for proc_cls in get_processors():
 		proc_cls.add_cli(subparsers)
 	
 	args = parser.parse_args()
-	processor = args.processor_class(args)
+	processor: UWBProcessor = args.processor_class(args)
 
 	try:
 		start(baud=args.baud, timeout=args.timeout)
