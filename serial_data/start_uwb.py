@@ -4,7 +4,7 @@ import serial
 import threading
 import serial.tools.list_ports
 
-serial_nrs = ["C208865F906F", "FAD4A05A59E7", "FA6D881A5AFC"]
+serial_nrs = ["C208865F906F", "FAD4A05A59E7", "FA6D881A5AFC", "F07DD0297227"]
 ports = serial.tools.list_ports.comports()
 print([port.serial_number for port in ports if port.serial_number])
 devices = [port.device for port in ports if port.serial_number in serial_nrs]
@@ -13,7 +13,7 @@ stop_event = threading.Event()
 from processing import *
 
 def get_processors() -> list[UWBProcessor]:
-	return [PlotDistProcessor, LogProcessor, AverageDistProcessor]
+	return [PlotDistProcessor, LogProcessor, AverageDistProcessor, TriangulationProcessor]
 
 def start(baud: int = 115200, timeout: int = 1):
 	threads = start_threads(baud, timeout)
