@@ -12,7 +12,7 @@ stop_event = threading.Event()
 from processing import *
 
 def get_processors() -> list[UWBProcessor]:
-	return [PlotDistProcessor, LogProcessor]
+	return [PlotDistProcessor, LogProcessor, AverageDistProcessor]
 
 def start(baud: int = 115200, timeout: int = 1):
 	threads = start_threads(baud, timeout)
@@ -25,6 +25,9 @@ def start(baud: int = 115200, timeout: int = 1):
 		stop_event.set()
 		for t in threads:
 			t.join()
+	finally:
+		processor.post_process()
+
 
 def start_threads(baud: int, timeout: int) -> list[threading.Thread]:
 	print(f"[GLOBAL] UWB Geräte: {devices}")
@@ -71,7 +74,7 @@ if __name__ == '__main__':
 	parser.add_argument('--baud', type=int, default=115200)
 	parser.add_argument('--timeout', type=int, default=1)
 
-	subparsers = parser.add_subparsers(dest="command", required=True)
+	subparsers = parser.add_subparsers(title="processor", dest="command", required=True)
 
 	for proc_cls in get_processors():
 		proc_cls.add_cli(subparsers)

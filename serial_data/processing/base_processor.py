@@ -29,3 +29,8 @@ class UWBProcessor(ABC):
 	def main(self):
 		"""Wird solange das Programm läuft, wiederholt auf dem Main-Thread aufgerufen"""
 		pass
+
+	@abstractmethod
+	def post_process(self):
+		"""Wird aufgerufen, nachdem alle Threads erfolgreich durch sind"""
+		pass

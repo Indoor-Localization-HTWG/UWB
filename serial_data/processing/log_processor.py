@@ -20,3 +20,6 @@ class LogProcessor(UWBProcessor):
 	# Wird solange das Programm läuft, wiederholt auf dem Main-Thread aufgerufen
 	def main(self):
 		time.sleep(1)
+	
+	def post_process(self):
+		...

@@ -43,6 +43,10 @@ class MyProcessor(UWBProcessor):
 	def main(self):
 		"""Wird solange das Programm läuft, wiederholt auf dem Main-Thread aufgerufen"""
 		pass # falls ihr nichts in main machen müsst kann es sinnvoll sein ein sleep hinzuzufügen
+
+	def post_process(self):
+		"""Wird aufgerufen, nachdem alle Threads erfolgreich durch sind"""
+		pass
 ```
 
 Wenn ihr euren Processor hinzugefügt habt, müsst ihr noch `processing/__init__.py` ergänzen: `from .my_processor import MyProcessor`.\

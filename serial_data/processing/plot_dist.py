@@ -51,3 +51,6 @@ class PlotDistProcessor(UWBProcessor):
 		self.fig.autofmt_xdate()
 		self.fig.canvas.draw()
 		self.fig.canvas.flush_events()
+
+	def post_process(self):
+		...
