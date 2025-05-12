@@ -23,6 +23,7 @@ class AverageDistProcessor(UWBProcessor):
 		match = self.pattern.match(line)
 		if match:
 			mac, dist = match.groups()
+			if mac == "0x0001": return
 			self.dists[mac].append(int(dist))
 		print(line)
 

@@ -30,6 +30,7 @@ class PlotDistProcessor(UWBProcessor):
 		match = self.pattern.match(line)
 		if match:
 			mac, dist = match.groups()
+			if mac == "0x0001": return
 			with self.data_lock:
 				self.distance_history[mac].append((datetime.now(), int(dist)))
 			print(f"[{i}] MAC={mac}, Distance={dist} cm")
