@@ -38,8 +38,8 @@ class AverageDistProcessor(UWBProcessor):
 
 		plt.figure(figsize=(10, 5))
 		plt.bar(macs, values, color='skyblue')
-		plt.xlabel("MAC Address")
-		plt.ylabel("Average Distance (cm)")
+		plt.xlabel("MAC Addresse")
+		plt.ylabel("Durchschnittliche Distanz (cm)")
 		plt.title("Durchschnittliche Distanzen pro MAC-Adresse")
 		plt.xticks(rotation=45)
 		plt.tight_layout()

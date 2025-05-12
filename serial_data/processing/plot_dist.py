@@ -36,9 +36,9 @@ class PlotDistProcessor(UWBProcessor):
 	
 	def main(self):
 		self.ax.clear()
-		self.ax.set_title("Live Distance Readings Over Time")
-		self.ax.set_xlabel("Time")
-		self.ax.set_ylabel("Distance (cm)")
+		self.ax.set_title("Distanz über Zeit")
+		self.ax.set_xlabel("Zeit")
+		self.ax.set_ylabel("Distanz (cm)")
 		self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
 		self.ax.set_ylim(-20, self.args.max_y)
 
