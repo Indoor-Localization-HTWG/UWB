@@ -4,17 +4,18 @@ Mit diesem CLI Tool kann man Daten aus den UWB Modulen über ihren seriellen Por
 
 Wie man es benutzt kann man mit `start_uwb.py -h` sehen:
 ```
-usage: start_uwb.py [-h] [--baud BAUD] [--timeout TIMEOUT] {plot,log} ...
-
-positional arguments:
-  {plot,log}
-    plot             Plottet die Distanzmessungen live auf einen Graph
-    log              Schreibt den Seriellen Output der UWB Module in die Konsole
+usage: start_uwb.py [-h] [--baud BAUD] [--timeout TIMEOUT] {plot,log,avr} ...
 
 options:
   -h, --help         show this help message and exit
   --baud BAUD
   --timeout TIMEOUT
+
+processor:
+  {plot,log,avr}
+    plot             Plottet die Distanzmessungen live auf einen Graph
+    log              Schreibt den Seriellen Output der UWB Module in die Konsole
+    avr              Berechnet die durchschnittliche Distanz über eine gegebene Zeit
 ```
 
 ## Processors hinzufügen
