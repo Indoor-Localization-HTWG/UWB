@@ -13,10 +13,10 @@ stop_event = threading.Event()
 from processing import *
 
 def get_processors() -> list[UWBProcessor]:
-	return [PlotDistProcessor, LogProcessor, AverageDistProcessor, TriangulationProcessor]
+	return [PlotDistProcessor, LogProcessor, StatDistProcessor, TriangulationProcessor]
 
-def start(baud: int = 115200, timeout: int = 1):
-	threads = start_threads(baud, timeout)
+def start(command: str | None, baud: int = 115200, timeout: int = 1):
+	threads = start_threads(command, baud, timeout)
 	
 	try:
 		while any(t.is_alive() for t in threads) and not stop_event.is_set():
@@ -30,7 +30,7 @@ def start(baud: int = 115200, timeout: int = 1):
 		processor.post_process()
 
 
-def start_threads(baud: int, timeout: int) -> list[threading.Thread]:
+def start_threads(cmd: str, baud: int, timeout: int) -> list[threading.Thread]:
 	print(f"[GLOBAL] UWB Geräte: {devices}")
 	if len(devices) == 0:
 		print(f"[GLOBAL] Keine UWB Geräte erkannt. Abbruch.")
@@ -39,19 +39,22 @@ def start_threads(baud: int, timeout: int) -> list[threading.Thread]:
 	print("[GLOBAL] Starte Threads")
 	threads: list[threading.Thread] = []
 	for i in range(len(devices)):
-		t = threading.Thread(target=start_serial, args=(i, baud, timeout))
+		t = threading.Thread(target=start_serial, args=(cmd, i, baud, timeout))
 		t.start()
 		threads.append(t)
 	
 	return threads
 
-def start_serial(i: int, baud: int, timeout: int):
+def start_serial(cmd: str | None, i: int, baud: int, timeout: int):
 	print(f"[{i}] Serielle Verbindung geöffnet.")
 	s = serial.Serial(devices[i], baudrate=baud, timeout=timeout)
 	try:
-		init_command = f"INITF -MULTI -ADDR=1 -PADDR=[{','.join([str(a) for a in range(2, len(devices)+1)])}]"
-		resp_command = f"RESPF -MULTI -ADDR={i+1} -PADDR=1"
-		command = init_command if i == 0 else resp_command
+		if (cmd == None):
+			init_command = f"INITF -MULTI -ADDR=1 -PADDR=[{','.join([str(a) for a in range(2, len(devices)+1)])}]"
+			resp_command = f"RESPF -MULTI -ADDR={i+1} -PADDR=1"
+			command = init_command if i == 0 else resp_command
+		else:
+			command = cmd
 		print(f"[{i}] Schicke Befehl: {command}")
 		s.write(f"{command}\n".encode('utf-8'))
 		time.sleep(0.5)
@@ -76,6 +79,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--baud', type=int, default=115200)
 	parser.add_argument('--timeout', type=int, default=1)
+	parser.add_argument("--cmd", type=str, default=None)
 
 	subparsers = parser.add_subparsers(title="processor", dest="command", required=True)
 
@@ -86,7 +90,7 @@ if __name__ == '__main__':
 	processor: UWBProcessor = args.processor_class(args)
 
 	try:
-		start(baud=args.baud, timeout=args.timeout)
+		start(command=args.cmd, baud=args.baud, timeout=args.timeout)
 	except KeyboardInterrupt:
 		print("[GLOBAL] Tastaturabbruch erkannt")
 		stop_event.set()
