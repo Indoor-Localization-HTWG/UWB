@@ -31,5 +31,5 @@ def berechne_statistiken(daten):
             print(f"3. Quartil (Q3)   : {q3}")
 
 if __name__ == "__main__":
-    daten = lese_csv_datei("messungen/messung5.csv")
+    daten = lese_csv_datei("messungen/messung14.csv")
     berechne_statistiken(daten)
