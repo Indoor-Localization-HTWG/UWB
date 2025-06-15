@@ -75,4 +75,42 @@ Kalibrierung von zwei UWB-Modulen und Überprüfung der Messgenauigkeit bei fest
                             
                             Idee mit der Stromversorgung:: Batterie oder Powerbank?
 
+  Wäre tendenziell schon mieglich mit TDoA zu messen:
+
+  Sehr großer Aufwand:
+  --> Kein SDK Support vorhanden
+  --> Die größte technische Hürde liegt der sehr präzisen Synchronisation zwischen den Anker und Client( Nanosekundenbereich). Unser UWB-Modul verwendet jedoch lediglich einen einfachen Quarzoszillator (kein TCXO), wodurch es zu temperatur- und driftbedingten Ungenauigkeiten kommt.  
+
+
+
+ok
+ant0.ch9.ant_delay: 0x000040a2 (len: 4)
+
+ok
+ant1.ch9.ant_delay: 0x000040a2 (len: 4)
+
+ok
+reps
+error unknown command
+save
+
+Das hat nicht so guut geklappt, denn wir bekamen schlechte Werte wie bspw.
+SESSION_INFO_NTF: {session_handle=1, sequence_number=12, block_index=0, n_measurements=1
+ [mac_address=0x0000, status="SUCCESS", distance[cm]=-75]}
+SESSION_INFO_NTF: {session_handle=1, sequence_number=13, block_index=1, n_measurements=1
+ [mac_address=0x0000, status="SUCCESS", distance[cm]=-72]}
+
+
+Auch nicht so gut:
+
+calkey ant0.ch9.ant_delay 0x00003BC9
+calkey ant1.ch9.ant_delay 0x00003BC9
+
+SESSION_INFO_NTF: {session_handle=1, sequence_number=0, block_index=386, n_measurements=1
+ [mac_address=0x0000, status="SUCCESS", distance[cm]=1093]}
+SESSION_INFO_NTF: {session_handle=1, sequence_number=1, block_index=387, n_measurements=1
+ [mac_address=0x0000, status="SUCCESS", distance[cm]=1089]}
+SESSION_INFO_NTF: {session_handle=1, sequence_number=2, block_index=388, n_measurements=1
+ [mac_address=0x0000, status="SUCCESS", distance[cm]=1091]}
+
 
