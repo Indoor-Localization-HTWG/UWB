@@ -200,3 +200,16 @@ rx_buffer[ALL_MSG_SN_IDX] = 0;
 - Bei schlechter Signalqualität kann die Hardware falsche Signale erkennen, bevor die Software die Sequenznummer prüfen kann
 
 Die Sequenznummer schützt also vor falschen Nachrichten, aber nicht vor falschen Zeitstempeln. Die Zeitstempel-Erfassung ist ein Hardware-Prozess, der vor der Sequenznummern-Prüfung stattfindet und bei schlechter Signalqualität fehleranfällig ist.
+
+
+
+
+Protokoll zum 16.06.2025
+–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
+Neue Erkenntnisse:
+
+Neue Fragen/Weitere Vorgehensweise:
+
+- Im Raum montieren und im Raum vesuchen zu messen. 
+batterie anschliessen. Tobi moechte 
