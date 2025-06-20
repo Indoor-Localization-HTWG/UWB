@@ -12,14 +12,14 @@ options:
   --timeout TIMEOUT
 
 processor:
-  {plot,log,avr}
+  {plot,log,avr,cal}
     plot             Plottet die Distanzmessungen live auf einen Graph
     log              Schreibt den Seriellen Output der UWB Module in die Konsole
     avr              Berechnet die durchschnittliche Distanz über eine gegebene Zeit
 ```
 
 ## Processors hinzufügen
-Die einzelnen sub-commands nennt nennen wir Processors. Im Ordner `processing` könnt ihr einen Processor hinzufügen. Jeder Processor bekommt seine eigene Datei und ist eine Unterklasse von `UWBProcessor`. 
+Die einzelnen sub-commands nennt nennen wir Processors. Im Ordner `processing` könnt ihr einen Processor hinzufügen. Jeder Processor bekommt seine eigene Datei und ist eine Unterklasse von `UWBProcessor`.
 
 Ein leerer Processor sieht so aus (ihr könnt diesen als Template benutzen):
 ```py

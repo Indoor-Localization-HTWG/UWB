@@ -13,7 +13,7 @@ stop_event = threading.Event()
 from processing import *
 
 def get_processors() -> list[UWBProcessor]:
-	return [PlotDistProcessor, LogProcessor, StatDistProcessor, TriangulationProcessor, CalProcessor]
+	return [PlotDistProcessor, LogProcessor, StatDistProcessor, TriangulationProcessor]
 
 def start(command: str | None, baud: int = 115200, timeout: int = 1):
 	threads = start_threads(command, baud, timeout)
@@ -48,12 +48,6 @@ def start_threads(cmd: str, baud: int, timeout: int) -> list[threading.Thread]:
 def start_serial(cmd: str | None, i: int, baud: int, timeout: int):
 	print(f"[{i}] Serielle Verbindung geöffnet.")
 	s = serial.Serial(devices[i], baudrate=baud, timeout=timeout)
-
-	# Store serial port in processor if it's a CalProcessor
-	if isinstance(processor, CalProcessor):
-		if not hasattr(processor, 'serial_ports'):
-			processor.serial_ports = {}
-		processor.serial_ports[i] = s
 
 	try:
 		if (cmd == None):
@@ -94,10 +88,7 @@ if __name__ == '__main__':
 		proc_cls.add_cli(subparsers)
 
 	args = parser.parse_args()
-	if args.processor_class == CalProcessor:
-		processor: UWBProcessor = args.processor_class(args, stop_event=stop_event)
-	else:
-		processor: UWBProcessor = args.processor_class(args)
+	processor: UWBProcessor = args.processor_class(args)
 
 	try:
 		start(command=args.cmd, baud=args.baud, timeout=args.timeout)
