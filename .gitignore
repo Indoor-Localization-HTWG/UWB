@@ -175,3 +175,6 @@ cython_debug/
 
 # Apfel
 .DS_Store
+
+# Kalibrierungsdateien
+*.cal
