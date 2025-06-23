@@ -20,7 +20,7 @@ def find_devices():
     ports = serial.tools.list_ports.comports()
     return {p.serial_number: p.device for p in ports if p.serial_number in SERIAL_NUMBERS}
 
-def send_command(ser, cmd, delay=0.2):
+def send_command(ser, cmd, delay=0.5):
     try:
         if cmd.strip() != "":
             print(f"[→] {ser.label}: {cmd}")
@@ -31,7 +31,7 @@ def send_command(ser, cmd, delay=0.2):
         return f"[ERROR] {e}"
 
 def set_calkey(ser, ant, delay_value):
-    send_command(ser, f"CALKEY ant{ant}.ch9.ant_delay {delay_value}", 0.1)
+    send_command(ser, f"CALKEY ant{ant}.ch9.ant_delay {delay_value}", 1)
 
 def graceful_exit(sig=None, frame=None):
     global running
@@ -72,16 +72,16 @@ def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, mar
     send_command(responder, "RESTORE")
 
     for ant in range(4):
-        set_calkey(initiator, ant, fixed_delay)
-    send_command(initiator, "SAVE")
+        set_calkey(responder, ant, fixed_delay)
+    send_command(responder, "SAVE")
 
     while True:
         print(f"\n=== Kalibrier-Durchlauf {iteration} ===")
         with distance_lock:
             distance_values.clear()
 
-        send_command(initiator, f"INITF -ADDR={ADDRS[0]} -PADDR={ADDRS[1]}")
         send_command(responder, f"RESPF -ADDR={ADDRS[1]} -PADDR={ADDRS[0]}")
+        send_command(initiator, f"INITF -ADDR={ADDRS[0]} -PADDR={ADDRS[1]}")
 
         print(f"[*] Messe für {duration} Sekunden ...")
         time.sleep(duration)
