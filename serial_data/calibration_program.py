@@ -18,7 +18,7 @@ distance_lock = threading.Lock()
 
 def find_devices():
     ports = serial.tools.list_ports.comports()
-    return [p.device for p in ports if p.serial_number in SERIAL_NUMBERS]
+    return {p.serial_number: p.device for p in ports if p.serial_number in SERIAL_NUMBERS}
 
 def send_command(ser, cmd, delay=0.2):
     try:
@@ -58,33 +58,36 @@ def serial_logger(ser):
         except Exception:
             pass
 
-def calibrate_pair(ser1, ser2, target_dist, duration, base_delay, margin):
+def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, margin):
     iteration = 1
-    current_delay = base_delay
+    current_delay = fixed_delay
 
-    send_command(ser1, "\n")
-    send_command(ser2, "\n")
-    send_command(ser1, "STOP")
-    send_command(ser2, "STOP")
+    send_command(initiator, "\n")
+    send_command(responder, "\n")
+    send_command(initiator, "STOP")
+    send_command(responder, "STOP")
     time.sleep(2)
 
-    # Restore nur 1x am Anfang
-    send_command(ser1, "RESTORE")
-    send_command(ser2, "RESTORE")
+    send_command(initiator, "RESTORE")
+    send_command(responder, "RESTORE")
+
+    for ant in range(4):
+        set_calkey(initiator, ant, fixed_delay)
+    send_command(initiator, "SAVE")
 
     while True:
         print(f"\n=== Kalibrier-Durchlauf {iteration} ===")
         with distance_lock:
             distance_values.clear()
 
-        send_command(ser1, f"INITF -ADDR={ADDRS[0]} -PADDR={ADDRS[1]}")
-        send_command(ser2, f"RESPF -ADDR={ADDRS[1]} -PADDR={ADDRS[0]}")
+        send_command(initiator, f"INITF -ADDR={ADDRS[0]} -PADDR={ADDRS[1]}")
+        send_command(responder, f"RESPF -ADDR={ADDRS[1]} -PADDR={ADDRS[0]}")
 
         print(f"[*] Messe für {duration} Sekunden ...")
         time.sleep(duration)
 
-        send_command(ser1, "STOP")
-        send_command(ser2, "STOP")
+        send_command(initiator, "STOP")
+        send_command(responder, "STOP")
 
         with distance_lock:
             distances = distance_values.copy()
@@ -102,21 +105,18 @@ def calibrate_pair(ser1, ser2, target_dist, duration, base_delay, margin):
             print("[✓] Kalibrierung abgeschlossen – Fehler innerhalb der Toleranz.")
             print(f"    ↪ Durchschnitt: {avg:.1f} cm")
             print(f"    ↪ Fehler: {error:.1f} cm")
-            print(f"    ↪ Finaler ant_delay: {current_delay} (0x{current_delay:04X}) für D1 und D2")
+            print(f"    ↪ Finaler ant_delay am Responder: {current_delay} (0x{current_delay:04X})")
             return
 
         delta = round(2 * error)
         delta = max(-100, min(100, delta))
         current_delay += delta
 
-        print(f"[~] Wende Korrektur an: delta={delta}, neuer Delay={current_delay} (0x{current_delay:04X})")
+        print(f"[~] Wende Korrektur an: delta={delta}, neuer Responder-Delay={current_delay} (0x{current_delay:04X})")
 
         for ant in range(4):
-            set_calkey(ser1, ant, current_delay)
-            set_calkey(ser2, ant, current_delay)
-
-        send_command(ser1, "SAVE")
-        send_command(ser2, "SAVE")
+            set_calkey(responder, ant, current_delay)
+        send_command(responder, "SAVE")
 
         iteration += 1
 
@@ -125,28 +125,37 @@ def main():
     signal.signal(signal.SIGINT, graceful_exit)
 
     parser = argparse.ArgumentParser(description="UWB Kalibrierung per Serial")
+    parser.add_argument("--initiator", required=True, help="Seriennummer des Geräts, das Initiator ist")
     parser.add_argument("--dist", type=int, default=200, help="Zielabstand in cm (default: 200)")
     parser.add_argument("--duration", type=int, default=10, help="Messdauer in Sekunden (default: 10)")
-    parser.add_argument("--base_delay", type=lambda x: int(x, 0), default=0x4015, help="Basis-Antennen-Delay in hex (default: 0x4015)")
+    parser.add_argument("--fixed_delay", type=lambda x: int(x, 0), default=0x4015, help="Fester Delay-Wert für Initiator (default: 0x4015)")
     parser.add_argument("--margin", type=float, default=2.0, help="Toleranzbereich in cm (default: ±2.0)")
 
     args = parser.parse_args()
 
-    ports = find_devices()
-    if len(ports) < 2:
-        print("Nicht genügend Geräte erkannt.")
+    devices = find_devices()
+    if args.initiator not in devices:
+        print(f"[!] Initiator mit Seriennummer {args.initiator} nicht gefunden.")
         return
 
-    ser1 = serial.Serial(ports[0], baudrate=115200, timeout=0.2)
-    ser2 = serial.Serial(ports[1], baudrate=115200, timeout=0.2)
-    ser1.label = "D1"
-    ser2.label = "D2"
+    other_devices = [sn for sn in devices if sn != args.initiator]
+    if not other_devices:
+        print("Kein zweites Gerät für Responder gefunden.")
+        return
+
+    initiator_port = devices[args.initiator]
+    responder_port = devices[other_devices[0]]
+
+    ser1 = serial.Serial(initiator_port, baudrate=115200, timeout=0.2)
+    ser2 = serial.Serial(responder_port, baudrate=115200, timeout=0.2)
+    ser1.label = "INIT"
+    ser2.label = "RESP"
 
     threading.Thread(target=serial_logger, args=(ser1,), daemon=True).start()
     threading.Thread(target=serial_logger, args=(ser2,), daemon=True).start()
 
     with ser1, ser2:
-        calibrate_pair(ser1, ser2, args.dist, args.duration, args.base_delay, args.margin)
+        calibrate_pair(ser1, ser2, args.dist, args.duration, args.fixed_delay, args.margin)
 
 if __name__ == "__main__":
     main()
