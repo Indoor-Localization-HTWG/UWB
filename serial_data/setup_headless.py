@@ -20,7 +20,7 @@ def program_responder(serial_nr: str, id: int):
 	if serial_nr not in devices:
 		print(f"WARNING: Tried to program {serial_nr} as responder, but it's not connected")
 		return
-	
+
 	print(f"INFO: Programming {serial_nr} as responder")
 	with serial.Serial(devices[serial_nr], BAUDRATE, timeout=0.5) as ser:
 		send_command(ser, "STOP")
@@ -48,7 +48,7 @@ parser = argparse.ArgumentParser(description="Stellt die UWB Module für den Bat
 parser.add_argument("--channel", type=int, default=9, choices=[5, 9], help="Kanal (5 oder 9, default: 9)")
 args = parser.parse_args()
 
-responders = { 
+responders = {
 	"FA6D881A5AFC": 2, # rot
 	"C208865F906F": 3, # grün
 	"FAD4A05A59E7": 4, # ohne

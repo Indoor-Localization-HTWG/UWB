@@ -18,11 +18,11 @@ class TriangulationProcessor(UWBProcessor):
         # Speichert die letzten Distanzen von Initiator zu den Beacons
         self.initiator_dists = defaultdict(lambda: deque(maxlen=5))
 
-        # Feste Positionen der Responder (Beacons)
+        # Feste Positionen der Responder (Beacons) basierend auf setup_headless
         self.beacon_positions = {
-            "0x0002": np.array([0, 0]),
-            "0x0003": np.array([150, 0]),
-            "0x0004": np.array([80, 120]),
+            "0x0002": np.array([0, 0]),  # rot
+            "0x0003": np.array([150, 0]),  # grün
+            "0x0004": np.array([80, 120]),  # ohne
         }
 
         # Plot-Vorbereitung
