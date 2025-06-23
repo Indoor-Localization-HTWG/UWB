@@ -1,6 +1,7 @@
 import threading
 import time
 import serial.tools.list_ports
+import argparse
 
 BAUDRATE = 115200
 
@@ -24,7 +25,7 @@ def program_responder(serial_nr: str, id: int):
 	with serial.Serial(devices[serial_nr], BAUDRATE, timeout=0.5) as ser:
 		send_command(ser, "STOP")
 		send_command(ser, "SETAPP RESPF")
-		send_command(ser, f"RESPF -MULTI -ADDR={id} -PADDR=1")
+		send_command(ser, f"RESPF -MULTI -ADDR={id} -PADDR=1 -CHAN={args.channel}")
 		time.sleep(0.5)
 		send_command(ser, "STOP")
 		send_command(ser, "SAVE")
@@ -38,10 +39,14 @@ def program_initiator(serial_nr: str, n_responder: int):
 	with serial.Serial(devices[serial_nr], BAUDRATE, timeout=0.5) as ser:
 		send_command(ser, "STOP")
 		send_command(ser, "SETAPP INITF")
-		send_command(ser, f"INITF -MULTI -ADDR=1 -PADDR=[{','.join([str(a) for a in range(2, n_responder+2)])}]")
+		send_command(ser, f"INITF -MULTI -ADDR=1 -PADDR=[{','.join([str(a) for a in range(2, n_responder+2)])}] -CHAN={args.channel}")
 		time.sleep(0.5)
 		send_command(ser, "STOP")
 		send_command(ser, "SAVE")
+
+parser = argparse.ArgumentParser(description="Stellt die UWB Module für den Batteriebetrieb ein")
+parser.add_argument("--channel", type=int, default=9, choices=[5, 9], help="Kanal (5 oder 9, default: 9)")
+args = parser.parse_args()
 
 responders = { 
 	"FA6D881A5AFC": 2, # rot
