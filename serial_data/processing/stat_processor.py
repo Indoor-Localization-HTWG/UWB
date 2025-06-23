@@ -37,7 +37,7 @@ class StatDistProcessor(UWBProcessor):
 		match = self.pattern.match(line)
 		if match:
 			mac, dist = match.groups()
-			#if mac == "0x0001": return
+			if mac == "0x0001": return # wenn du keine data kriegst kann es daran liegen
 			self.dists[mac].append(int(dist))
 		print(line)
 

@@ -13,7 +13,7 @@
 In `/SDK/Tools/GUI/*` gibt es eine Applikation "QorvoOneTWR-2.1.1" womit man das Board konfigurieren und testen kann. Wir konnten bisher nur Two-Way-Ranging ausprobieren und kein TDoA
 
 # Firmware bauen
-TODO
+Siehe SDK Doku und hoffe es funktioniert bei dir. Python envs und pip könnte Probleme machen. Musst schauen, dass der Interpreter ausgewählt ist, wo pip alle packages installiert hat. 
 
 # CLI
 ## 1. Vorraussetzungen
@@ -79,5 +79,21 @@ Um Ranging zu stoppen benutzt man den Befehl `STOP`.
 Die Kalibrierungsdaten sind als Key-Value pair in einem Non-Volatile-Speicher gelagert. 
 Man kann sie alle mit `LISTCAL` auslesen und mit `CALKEY <key> <value>` setzen. Mit `CALKEY <key>` kann man einen einzelnen Key abfragen.
 
+Der `RESTORE` Befehl setzt alle Einstellungen und Kalibrierungswerte auf den default Wert.
 
+# Batteriebetrieb
+Das UWB Modul hat einen Batterieanschluss und zwei USB anschlüsse, die Strom liefern können.
 
+Mit dieser Folge von Befehlen lässt sich ein Modul in einen bestimmten Modus zum Autostart setzen:
+```
+SETAPP RESPF
+RESPF -ADDR=<address> -PADDR=<responder address>
+STOP
+SAVE
+``` 
+
+Hier startet das Modul jetzt als Responder. Man würde denken, dass man nun das Modul an eine Powerbank anschließen kann und es funktioniert, jedoch wird die Übertragung nach kurzer Zeit Unterbrochen. 
+
+Der Workaround wird in diesem Forum post beschrieben: https://forum.qorvo.com/t/tutorial-how-to-use-dw3-qm33-sdk-to-operate-a-battery-operated-dk-to-take-ranging-measurements-for-evaluation/21845
+
+Beachte, nun wird der USB Port J9 benutzt.
