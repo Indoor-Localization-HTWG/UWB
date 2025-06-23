@@ -1,24 +1,27 @@
 # UWB Datenverarbeitung
 
+## Processing
 Mit diesem CLI Tool kann man Daten aus den UWB Modulen über ihren seriellen Port auslesen, verarbeiten und darstellen.
 
 Wie man es benutzt kann man mit `start_uwb.py -h` sehen:
 ```
-usage: start_uwb.py [-h] [--baud BAUD] [--timeout TIMEOUT] {plot,log,avr} ...
+usage: start_uwb.py [-h] [--baud BAUD] [--timeout TIMEOUT] [--cmd CMD] {plot,log,stat,triang} ...
 
 options:
-  -h, --help         show this help message and exit
+  -h, --help            show this help message and exit
   --baud BAUD
   --timeout TIMEOUT
+  --cmd CMD
 
 processor:
-  {plot,log,avr,cal}
-    plot             Plottet die Distanzmessungen live auf einen Graph
-    log              Schreibt den Seriellen Output der UWB Module in die Konsole
-    avr              Berechnet die durchschnittliche Distanz über eine gegebene Zeit
+  {plot,log,stat,triang}
+    plot                Plottet die Distanzmessungen live auf einen Graph
+    log                 Schreibt den Seriellen Output der UWB Module in die Konsole
+    stat                Berechnet die Statistik über eine gegebene Zeit
+    triang              Trianguliert die Position des Initiators anhand der festen Responder und plottet diese live
 ```
 
-## Processors hinzufügen
+### Processors hinzufügen
 Die einzelnen sub-commands nennt nennen wir Processors. Im Ordner `processing` könnt ihr einen Processor hinzufügen. Jeder Processor bekommt seine eigene Datei und ist eine Unterklasse von `UWBProcessor`.
 
 Ein leerer Processor sieht so aus (ihr könnt diesen als Template benutzen):
@@ -52,3 +55,15 @@ class MyProcessor(UWBProcessor):
 
 Wenn ihr euren Processor hinzugefügt habt, müsst ihr noch `processing/__init__.py` ergänzen: `from .my_processor import MyProcessor`.\
 Und schließlich die liste in `start_uwb.py::get_processors()` erweitern.
+
+## Headless setup
+`setup_headless.py` configuriert alle angeschlossenen UWB Module zum Autostart im Multi-TWR Modus.
+
+Die genaue anordnung ist im Code über die Variablen `responders` und `initiator` definiert.
+
+## Kalibrierung laden
+1. Den output einer Kalibrierung als `.cal` Datei speichern
+2. Die Kalibrierungs bei `<file>` in das Modul `<port>` laden: `set_calibration.py -p <port> -f <file>`
+
+## Kalibrierung durchführen
+TODO @Arthur
