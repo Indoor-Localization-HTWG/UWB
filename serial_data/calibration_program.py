@@ -31,7 +31,7 @@ def send_command(ser, cmd, delay=0.2):
         return f"[ERROR] {e}"
 
 def set_calkey(ser, ant, delay_value):
-    send_command(ser, f"CALKEY ant{ant}.ch9.ant_delay {delay_value}", 0.05)
+    send_command(ser, f"CALKEY ant{ant}.ch9.ant_delay {delay_value}", 0.1)
 
 def graceful_exit(sig=None, frame=None):
     global running
