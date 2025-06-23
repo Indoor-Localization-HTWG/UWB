@@ -59,13 +59,15 @@ def serial_logger(ser):
         except Exception:
             pass
 
-def plot_calibration_curve(delays, errors):
+def plot_calibration_curve(delays, errors, final_delay, final_error):
     data = sorted(zip(delays, errors))
     delays_sorted, errors_sorted = zip(*data)
 
     plt.figure(figsize=(10, 5))
     plt.plot(delays_sorted, errors_sorted, marker='o', label='Messfehler')
-    plt.scatter(delays_sorted[-1], errors_sorted[-1], color='red', zorder=5, label='Finaler Wert')
+
+    plt.scatter(final_delay, final_error, color='red', zorder=5, label='Finaler Wert')
+
     plt.title("Kalibrierfehler vs. Antennen-Delay")
     plt.xlabel("ant_delay")
     plt.ylabel("Fehler [cm]")
@@ -129,7 +131,7 @@ def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, tol
             print(f"    ↪ Finaler ant_delay am Responder: {current_delay} (0x{current_delay:04X})")
 
             if plot:
-                plot_calibration_curve(delay_history, error_history)
+                plot_calibration_curve(delay_history, error_history, current_delay, error)
             return
 
         delta = round(2 * error)
