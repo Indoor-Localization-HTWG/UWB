@@ -6,6 +6,7 @@ import sys
 import threading
 import argparse
 from statistics import mean
+import matplotlib.pyplot as plt
 
 SERIAL_NUMBERS = ["C208865F906F", "FAD4A05A59E7", "FA6D881A5AFC", "F07DD0297227"]
 ADDRS = [0x001, 0x002]
@@ -58,9 +59,24 @@ def serial_logger(ser):
         except Exception:
             pass
 
-def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, margin):
+def plot_calibration_curve(delays, errors):
+    data = sorted(zip(delays, errors))
+    delays_sorted, errors_sorted = zip(*data)
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(delays_sorted, errors_sorted, marker='o')
+    plt.title("Kalibrierfehler vs. Antennen-Delay")
+    plt.xlabel("ant_delay")
+    plt.ylabel("Fehler [cm]")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, margin, plot):
     iteration = 1
     current_delay = fixed_delay
+    delay_history = []
+    error_history = []
 
     send_command(initiator, "\n")
     send_command(responder, "\n")
@@ -80,6 +96,7 @@ def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, mar
         with distance_lock:
             distance_values.clear()
 
+        # Wichtig: Responder zuerst, dann Initiator
         send_command(responder, f"RESPF -ADDR={ADDRS[1]} -PADDR={ADDRS[0]}")
         send_command(initiator, f"INITF -ADDR={ADDRS[0]} -PADDR={ADDRS[1]}")
 
@@ -98,6 +115,9 @@ def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, mar
 
         avg = mean(distances)
         error = avg - target_dist
+        delay_history.append(current_delay)
+        error_history.append(error)
+
         print(f"[=] Gemessener Abstand: {avg:.1f} cm")
         print(f"[=] Fehler: {error:.1f} cm (Erlaubt: ±{margin} cm)")
 
@@ -106,6 +126,9 @@ def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, mar
             print(f"    ↪ Durchschnitt: {avg:.1f} cm")
             print(f"    ↪ Fehler: {error:.1f} cm")
             print(f"    ↪ Finaler ant_delay am Responder: {current_delay} (0x{current_delay:04X})")
+
+            if plot:
+                plot_calibration_curve(delay_history, error_history)
             return
 
         delta = round(2 * error)
@@ -130,6 +153,7 @@ def main():
     parser.add_argument("--duration", type=int, default=10, help="Messdauer in Sekunden (default: 10)")
     parser.add_argument("--fixed_delay", type=lambda x: int(x, 0), default=0x4015, help="Fester Delay-Wert für Initiator (default: 0x4015)")
     parser.add_argument("--margin", type=float, default=2.0, help="Toleranzbereich in cm (default: ±2.0)")
+    parser.add_argument("--plot", action="store_true", help="Zeige Plot der Kalibrierwerte")
 
     args = parser.parse_args()
 
@@ -155,7 +179,7 @@ def main():
     threading.Thread(target=serial_logger, args=(ser2,), daemon=True).start()
 
     with ser1, ser2:
-        calibrate_pair(ser1, ser2, args.dist, args.duration, args.fixed_delay, args.margin)
+        calibrate_pair(ser1, ser2, args.dist, args.duration, args.fixed_delay, args.margin, args.plot)
 
 if __name__ == "__main__":
     main()
