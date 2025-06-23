@@ -51,8 +51,8 @@ def start_serial(cmd: str | None, i: int, baud: int, timeout: int):
 	time.sleep(args.delay)
 	try:
 		if (cmd == None):
-			init_command = f"INITF -MULTI -ADDR=1 -PADDR=[{','.join([str(a) for a in range(2, len(devices)+1)])}]"
-			resp_command = f"RESPF -MULTI -ADDR={i+1} -PADDR=1"
+			init_command = f"INITF -MULTI -ADDR=1 -PADDR=[{','.join([str(a) for a in range(2, len(devices)+1)])}] -CHAN={args.channel}"
+			resp_command = f"RESPF -MULTI -ADDR={i+1} -PADDR=1 -CHAN={args.channel}"
 			command = init_command if i == 0 else resp_command
 		else:
 			command = cmd
@@ -65,7 +65,6 @@ def start_serial(cmd: str | None, i: int, baud: int, timeout: int):
 				continue
 
 			processor.on_data(i, line)
-			time.sleep(0.1)
 		print(f"[{i}] Stoppe Schnittstelle")
 	except Exception as err:
 		print(f"[{i}] Fehler: {err}")
@@ -80,8 +79,10 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--baud', type=int, default=115200)
 	parser.add_argument('--timeout', type=int, default=1)
-	parser.add_argument("--cmd", type=str, default=None)
+	parser.add_argument("--cmd", type=str, default=None, help="Fester command der auf allen Modulen ausgeführt wird")
 	parser.add_argument("--delay", type=float, default=0.5)
+	parser.add_argument("--channel", type=int, default=9, choices=[5, 9], help="Kanal (5 oder 9, default: 9)")
+	parser.add_argument("--remote-responders", type=str, default=None, help="Liste der Responder. Benutze diese Option wenn du nur ein Initator Modul angeschlossen hast. Beispiel: '[2,3,4]'")
 
 	subparsers = parser.add_subparsers(title="processor", dest="command", required=True)
 
@@ -92,7 +93,11 @@ if __name__ == '__main__':
 	processor: UWBProcessor = args.processor_class(args)
 
 	try:
-		start(command=args.cmd, baud=args.baud, timeout=args.timeout)
+		if args.cmd:
+			command = args.cmd
+		else:
+			command = f"INITF -MULTI -ADDR=1 -PADDR={args.remote_responders}"
+		start(command=command, baud=args.baud, timeout=args.timeout)
 	except KeyboardInterrupt:
 		print("[GLOBAL] Tastaturabbruch erkannt")
 		stop_event.set()
