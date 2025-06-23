@@ -34,11 +34,11 @@ def program_initiator(serial_nr: str, n_responder: int):
 		print(f"WARNING: Tried to program {serial_nr} as initiator, but it's not connected")
 		return
 
-	print(f"INFO: Programming {serial_nr} as responder")
+	print(f"INFO: Programming {serial_nr} as responder with {n_responder} responders")
 	with serial.Serial(devices[serial_nr], BAUDRATE, timeout=0.5) as ser:
 		send_command(ser, "STOP")
 		send_command(ser, "SETAPP INITF")
-		send_command(ser, f"INITF -MULTI -ADDR=1 -PADDR={range(2, n_responder+1)}")
+		send_command(ser, f"INITF -MULTI -ADDR=1 -PADDR=[{','.join([str(a) for a in range(2, n_responder+2)])}]")
 		time.sleep(0.5)
 		send_command(ser, "STOP")
 		send_command(ser, "SAVE")
