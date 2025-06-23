@@ -31,8 +31,8 @@ def send_command(ser, cmd, delay=0.5):
     except Exception as e:
         return f"[ERROR] {e}"
 
-def set_calkey(ser, ant, delay_value):
-    send_command(ser, f"CALKEY ant{ant}.ch9.ant_delay {delay_value}", 1)
+def set_calkey(ser, ant, delay_value, channel):
+    send_command(ser, f"CALKEY ant{ant}.ch{channel}.ant_delay {delay_value}", 1)
 
 def graceful_exit(sig=None, frame=None):
     global running
@@ -64,15 +64,17 @@ def plot_calibration_curve(delays, errors):
     delays_sorted, errors_sorted = zip(*data)
 
     plt.figure(figsize=(10, 5))
-    plt.plot(delays_sorted, errors_sorted, marker='o')
+    plt.plot(delays_sorted, errors_sorted, marker='o', label='Messfehler')
+    plt.scatter(delays_sorted[-1], errors_sorted[-1], color='red', zorder=5, label='Finaler Wert')
     plt.title("Kalibrierfehler vs. Antennen-Delay")
     plt.xlabel("ant_delay")
     plt.ylabel("Fehler [cm]")
     plt.grid(True)
+    plt.legend()
     plt.tight_layout()
     plt.show()
 
-def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, margin, plot):
+def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, tolerance, channel, plot):
     iteration = 1
     current_delay = fixed_delay
     delay_history = []
@@ -88,7 +90,7 @@ def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, mar
     send_command(responder, "RESTORE")
 
     for ant in range(4):
-        set_calkey(responder, ant, fixed_delay)
+        set_calkey(responder, ant, fixed_delay, channel)
     send_command(responder, "SAVE")
 
     while True:
@@ -96,9 +98,8 @@ def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, mar
         with distance_lock:
             distance_values.clear()
 
-        # Wichtig: Responder zuerst, dann Initiator
-        send_command(responder, f"RESPF -ADDR={ADDRS[1]} -PADDR={ADDRS[0]}")
-        send_command(initiator, f"INITF -ADDR={ADDRS[0]} -PADDR={ADDRS[1]}")
+        send_command(responder, f"RESPF -ADDR={ADDRS[1]} -PADDR={ADDRS[0]} -CHAN={channel}")
+        send_command(initiator, f"INITF -ADDR={ADDRS[0]} -PADDR={ADDRS[1]} -CHAN={channel}")
 
         print(f"[*] Messe für {duration} Sekunden ...")
         time.sleep(duration)
@@ -119,9 +120,9 @@ def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, mar
         error_history.append(error)
 
         print(f"[=] Gemessener Abstand: {avg:.1f} cm")
-        print(f"[=] Fehler: {error:.1f} cm (Erlaubt: ±{margin} cm)")
+        print(f"[=] Fehler: {error:.1f} cm (Erlaubt: ±{tolerance} cm)")
 
-        if abs(error) <= margin:
+        if abs(error) <= tolerance:
             print("[✓] Kalibrierung abgeschlossen – Fehler innerhalb der Toleranz.")
             print(f"    ↪ Durchschnitt: {avg:.1f} cm")
             print(f"    ↪ Fehler: {error:.1f} cm")
@@ -138,7 +139,7 @@ def calibrate_pair(initiator, responder, target_dist, duration, fixed_delay, mar
         print(f"[~] Wende Korrektur an: delta={delta}, neuer Responder-Delay={current_delay} (0x{current_delay:04X})")
 
         for ant in range(4):
-            set_calkey(responder, ant, current_delay)
+            set_calkey(responder, ant, current_delay, channel)
         send_command(responder, "SAVE")
 
         iteration += 1
@@ -152,7 +153,8 @@ def main():
     parser.add_argument("--dist", type=int, default=200, help="Zielabstand in cm (default: 200)")
     parser.add_argument("--duration", type=int, default=10, help="Messdauer in Sekunden (default: 10)")
     parser.add_argument("--fixed_delay", type=lambda x: int(x, 0), default=0x4015, help="Fester Delay-Wert für Initiator (default: 0x4015)")
-    parser.add_argument("--margin", type=float, default=2.0, help="Toleranzbereich in cm (default: ±2.0)")
+    parser.add_argument("--tolerance", type=float, default=2.0, help="Toleranzbereich in cm (default: ±2.0)")
+    parser.add_argument("--channel", type=int, default=9, choices=[5, 9], help="Kanal (5 oder 9) für Kalibrierung (default: 9)")
     parser.add_argument("--plot", action="store_true", help="Zeige Plot der Kalibrierwerte")
 
     args = parser.parse_args()
@@ -179,7 +181,15 @@ def main():
     threading.Thread(target=serial_logger, args=(ser2,), daemon=True).start()
 
     with ser1, ser2:
-        calibrate_pair(ser1, ser2, args.dist, args.duration, args.fixed_delay, args.margin, args.plot)
+        calibrate_pair(
+            ser1, ser2,
+            args.dist,
+            args.duration,
+            args.fixed_delay,
+            args.tolerance,
+            args.channel,
+            args.plot
+        )
 
 if __name__ == "__main__":
     main()
