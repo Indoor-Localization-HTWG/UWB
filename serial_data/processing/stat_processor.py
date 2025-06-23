@@ -15,7 +15,7 @@ class StatDistProcessor(UWBProcessor):
 	def __init__(self, args):
 		self.args = args
 		self.dists: dict[str, list] = defaultdict(lambda: [])
-		self.pattern = re.compile(r'\[mac_address=(0x[0-9a-fA-F]+), status="SUCCESS", distance\[cm\]=(-?\d+)\]')
+		self.pattern = re.compile(r'\[mac_address=(0x[0-9a-fA-F]+),\s*status="SUCCESS",\s*distance\[cm\]=(-?\d+)\]')
 		self.start_time = None
 		self.timeout = args.time
 
@@ -37,7 +37,7 @@ class StatDistProcessor(UWBProcessor):
 		match = self.pattern.match(line)
 		if match:
 			mac, dist = match.groups()
-			if mac == "0x0001": return
+			#if mac == "0x0001": return
 			self.dists[mac].append(int(dist))
 		print(line)
 

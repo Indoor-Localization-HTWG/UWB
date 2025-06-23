@@ -48,7 +48,7 @@ def start_threads(cmd: str, baud: int, timeout: int) -> list[threading.Thread]:
 def start_serial(cmd: str | None, i: int, baud: int, timeout: int):
 	print(f"[{i}] Serielle Verbindung geöffnet.")
 	s = serial.Serial(devices[i], baudrate=baud, timeout=timeout)
-
+	time.sleep(args.delay)
 	try:
 		if (cmd == None):
 			init_command = f"INITF -MULTI -ADDR=1 -PADDR=[{','.join([str(a) for a in range(2, len(devices)+1)])}]"
@@ -58,21 +58,21 @@ def start_serial(cmd: str | None, i: int, baud: int, timeout: int):
 			command = cmd
 		print(f"[{i}] Schicke Befehl: {command}")
 		s.write(f"{command}\n".encode('utf-8'))
-		time.sleep(0.5)
+		time.sleep(args.delay)
 		while not stop_event.is_set():
 			line = s.readline().decode('utf-8', errors='ignore').strip()
 			if not line:
 				continue
 
 			processor.on_data(i, line)
-
+			time.sleep(0.1)
 		print(f"[{i}] Stoppe Schnittstelle")
 	except Exception as err:
 		print(f"[{i}] Fehler: {err}")
 	finally:
 		print(f"[{i}] Schicke Befehl: STOP")
 		s.write(f"STOP\n".encode('utf-8'))
-		time.sleep(0.5)
+		time.sleep(args.delay)
 		s.close()
 
 
@@ -81,6 +81,7 @@ if __name__ == '__main__':
 	parser.add_argument('--baud', type=int, default=115200)
 	parser.add_argument('--timeout', type=int, default=1)
 	parser.add_argument("--cmd", type=str, default=None)
+	parser.add_argument("--delay", type=float, default=0.5)
 
 	subparsers = parser.add_subparsers(title="processor", dest="command", required=True)
 

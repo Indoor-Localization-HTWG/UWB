@@ -4,16 +4,23 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # key: distanz in cm
+#messungen = {
+#	200: "messung1.csv",
+#	100: "messung7.csv",
+#	50: "messung8.csv",
+#	30: "messung9.csv",
+#	20: "messung10.csv",
+#	250: "messung11.csv",
+#	300: "messung12.csv",
+#	400: "messung13.csv",
+#	2855: "messung14.csv"
+#}
+#
+
 messungen = {
-	200: "messung1.csv",
-	100: "messung7.csv",
-	50: "messung8.csv",
-	30: "messung9.csv",
-	20: "messung10.csv",
-	250: "messung11.csv",
-	300: "messung12.csv",
-	400: "messung13.csv",
-	2855: "messung14.csv"
+	200: "kalibriert/messung_2m_kalibriert.csv",
+	400: "kalibriert/messung_4m_kalibriert.csv",
+	2855: "kalibriert/messung_2855cm_kalibriert.csv",
 }
 
 daten = {}
@@ -31,7 +38,7 @@ def strip():
 	import matplotlib.pyplot as plt
 
 	anzahl = len(sorted(daten.keys()))
-	fig, axs = plt.subplots(1, anzahl, figsize=(4 * anzahl, 6), sharey=False)
+	fig, axs = plt.subplots(1, anzahl, figsize=(2 * anzahl, 6), sharey=False)
 
 	for ax, soll in zip(axs, sorted(daten.keys())):
 		werte = daten[soll]
