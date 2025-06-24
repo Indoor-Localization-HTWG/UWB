@@ -68,10 +68,6 @@ Und schließlich die liste in `start_uwb.py::get_processors()` erweitern.
 
 Die genaue anordnung ist im Code über die Variablen `responders` und `initiator` definiert.
 
-## Kalibrierung laden
-1. Den output einer Kalibrierung als `.cal` Datei speichern
-2. Die Kalibrierungs bei `<file>` in das Modul `<port>` laden: `set_calibration.py -p <port> -f <file>`
-
 ## Kalibrierung durchführen
 
 Das Kalibrierungsprogramm `calibration.py` dient dazu, die UWB-Module zu kalibrieren, um präzise Abstandsmessungen zu gewährleisten. Es unterstützt die automatische Anpassung des Antennen-Delays basierend auf den gemessenen Fehlern.
@@ -106,3 +102,29 @@ python calibration_program.py --initiator F07DD0297227 --dist 250 --duration 15 
 ```
 
 Dieses Beispiel kalibriert das Gerät mit der Seriennummer `F07DD0297227` auf einen Zielabstand von 250 cm, mit einer Messdauer von 15 Sekunden und einer Toleranz von ±1.5 cm. Der Kanal 9 wird verwendet und die Kalibrierwerte werden geplottet.
+
+# Dokumentation: triang.py
+
+## Beschreibung
+Das Skript `triang.py` führt eine Echtzeit-Trilateration basierend auf UWB-Daten durch. Es liest serielle Daten von einem Initiator-Modul, verarbeitet die Entfernungen zu mehreren Anchors und berechnet die Position des Initiators. Die berechnete Position wird live in einem Plot dargestellt.
+
+## Konfiguration
+- **SERIAL_NUMBERS**: Enthält die Seriennummern der bekannten Initiator-Module.
+- **ANCHOR_POSITIONS**: Definiert die Positionen der Anchors im Raum.
+- **BAUDRATE**: Baudrate für die serielle Kommunikation.
+- **READ_TIMEOUT**: Timeout für das Lesen von seriellen Daten.
+- **TRACE_LENGTH**: Anzahl der letzten Punkte, die im Plot angezeigt werden.
+
+## Ablauf
+1. Das Skript sucht den Initiator-Port und öffnet die serielle Verbindung.
+2. Ein separater Thread liest die Daten und extrahiert Nachrichten.
+3. Die Entfernungen zu den Anchors werden analysiert und die Position des Initiators berechnet.
+4. Die Position wird live im Plot angezeigt.
+
+## Beispiel
+Nach der Ausführung zeigt das Skript die berechnete Position des Initiators:
+```
+x= 200.0 cm   y= 150.0 cm
+```
+Die Position wird im Plot visualisiert.
+
