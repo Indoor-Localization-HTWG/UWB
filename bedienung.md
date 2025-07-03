@@ -82,7 +82,7 @@ Man kann sie alle mit `LISTCAL` auslesen und mit `CALKEY <key> <value>` setzen. 
 Der `RESTORE` Befehl setzt alle Einstellungen und Kalibrierungswerte auf den default Wert.
 
 # Batteriebetrieb
-Das UWB Modul hat einen Batterieanschluss und zwei USB anschlüsse, die Strom liefern können.
+Das UWB Modul hat einen Batterieanschluss (JST SR 2 Pin), Löcher an denen man Stromkabel löten kann, Power pins beim Raspberry pi interface und zwei USB anschlüsse, die Strom liefern können. Die Versorgungsspannung des 3001C ist 2,5V-3,6V
 
 Mit dieser Folge von Befehlen lässt sich ein Modul in einen bestimmten Modus zum Autostart setzen:
 ```
