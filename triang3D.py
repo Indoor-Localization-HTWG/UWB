@@ -21,10 +21,13 @@ SERIAL_NUMBERS = {
     "F07DD0297227",
 }
 
+# x, y, z Koordinaten der Anker
+# Diese Werte sollten an die tatsächlichen Positionen der Anker angepasst werden.
+
 ANCHOR_POSITIONS = {
-    0x0002: np.array([0.0, 0.0]),        # rot
-    0x0003: np.array([0.0, 250]),     # grün
-    0x0004: np.array([-180.0, 90]),      # ohne
+    0x0002: np.array([0.0, 0.0, 0.0]),        # rot
+    0x0003: np.array([0.0, -170, 40]),     # grün
+    0x0004: np.array([330, -85, -80]),      # ohne
 }
 
 BAUDRATE       = 115_200
@@ -57,18 +60,48 @@ def parse_distances(msg: str) -> dict[int, float] | None:
     return {int(mac, 16): float(dist) for mac, dist in matches}
 
 def trilateration(anchors: list[np.ndarray], d: list[float]) -> np.ndarray | None:
-    (x1, y1), (x2, y2), (x3, y3) = anchors
-    r1, r2, r3 = d
-    A, B = 2*(x2 - x1), 2*(y2 - y1)
-    C = r1**2 - r2**2 - x1**2 + x2**2 - y1**2 + y2**2
-    D, E = 2*(x3 - x1), 2*(y3 - y1)
-    F = r1**2 - r3**2 - x1**2 + x3**2 - y1**2 + y3**2
-    denom = A*E - B*D
-    if abs(denom) < 1e-6:
+    if len(anchors) != 3 or len(d) != 3:
+        logging.warning("Trilateration braucht genau 3 Anker und Distanzen.")
         return None
-    x = (C*E - F*B) / denom
-    y = (A*F - D*C) / denom
-    return np.array([x, y])
+
+    P1, P2, P3 = anchors
+    r1, r2, r3 = d
+
+    ex = P2 - P1
+    distance = np.linalg.norm(ex)
+    if distance == 0:
+        logging.warning("Anker 1 und 2 sind identisch.")
+        return None
+    ex /= distance
+
+    temp = P3 - P1
+    i = np.dot(ex, temp)
+    temp2 = temp - i * ex
+    temp2_norm = np.linalg.norm(temp2)
+    if temp2_norm == 0:
+        logging.warning("Anker 3 liegt auf Linie zwischen Anker 1 und 2.")
+        return None
+    ey = temp2 / temp2_norm
+    ez = np.cross(ex, ey)
+
+    j = np.dot(ey, temp)
+    x = (r1**2 - r2**2 + distance**2) / (2 * distance)
+    y = (r1**2 - r3**2 + i**2 + j**2 - 2 * i * x) / (2 * j)
+
+    z_squared = r1**2 - x**2 - y**2
+    if z_squared < -1e-2:
+        return None
+    elif z_squared < 0:
+        z = -np.sqrt(-z_squared)
+    else:
+        z = np.sqrt(z_squared)
+
+    # Zwei mögliche Lösungen
+    result_1 = P1 + x * ex + y * ey + z * ez
+    result_2 = P1 + x * ex + y * ey - z * ez
+
+    # Wähle den Punkt mit niedrigerem z-Wert (näher am Boden)
+    return result_1 if result_1[2] < result_2[2] else result_2
 
 # --------------------------------------------------------------------------- #
 #  Plot-Objekt
@@ -76,22 +109,33 @@ def trilateration(anchors: list[np.ndarray], d: list[float]) -> np.ndarray | Non
 class LivePlot:
     def __init__(self):
         plt.ion()
-        self.fig, self.ax = plt.subplots(figsize=(6, 6))
+        self.fig = plt.figure(figsize=(8, 8))
+        self.ax = self.fig.add_subplot(111, projection='3d')
         self._setup_axes()
         self.trace = deque(maxlen=TRACE_LENGTH)
-        (self.line,)  = self.ax.plot([], [], "b--", lw=1, alpha=0.6)
-        (self.point,) = self.ax.plot([], [], "ro",  ms=8)
+        self.line, = self.ax.plot([], [], [], "b--", lw=1, alpha=0.6)
+        self.point, = self.ax.plot([], [], [], "ro", ms=8)
 
     def _setup_axes(self):
+        # Berechne die Grenzen basierend auf den Ankerpositionen
+        x_coords = [pos[0] for pos in ANCHOR_POSITIONS.values()]
+        y_coords = [pos[1] for pos in ANCHOR_POSITIONS.values()]
+        z_coords = [pos[2] for pos in ANCHOR_POSITIONS.values()]
+
+        x_min, x_max = min(x_coords) - 50, max(x_coords) + 50
+        y_min, y_max = min(y_coords) - 50, max(y_coords) + 50
+        z_min, z_max = min(z_coords) - 50, max(z_coords) + 50
+
         for mac, pos in ANCHOR_POSITIONS.items():
             self.ax.scatter(*pos, marker="^", c="k", s=80, zorder=4)
-            self.ax.text(pos[0]+3, pos[1]+3, f"{mac:04X}", fontsize=9)
-        self.ax.set_xlim(-300, 300)
-        self.ax.set_ylim(-300, 300)
-        self.ax.set_aspect("equal", adjustable="box")
-        self.ax.grid(True)
+            self.ax.text(pos[0]+3, pos[1]+3, pos[2]+3, f"{mac:04X}", fontsize=9)
+
+        self.ax.set_xlim(x_min, x_max)
+        self.ax.set_ylim(y_min, y_max)
+        self.ax.set_zlim(z_min, z_max)
         self.ax.set_xlabel("x [cm]")
         self.ax.set_ylabel("y [cm]")
+        self.ax.set_zlabel("z [cm]")
         self.ax.set_title("UWB – Initiator-Position")
 
     def update(self, pos: np.ndarray):
@@ -99,7 +143,9 @@ class LivePlot:
         pts = np.asarray(self.trace)
         if len(pts) > 1:
             self.line.set_data(pts[:, 0], pts[:, 1])
+            self.line.set_3d_properties(pts[:, 2])
         self.point.set_data([pos[0]], [pos[1]])
+        self.point.set_3d_properties([pos[2]])
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
 
@@ -112,6 +158,7 @@ def reader_thread(ser: serial.Serial, q: Queue, running: threading.Event):
         try:
             data = ser.read(ser.in_waiting or 1).decode(errors="ignore")
             if data:
+                logging.debug("Empfangene Daten: %s", data)
                 buf += data
                 while "SESSION_INFO_NTF" in buf and "}" in buf:
                     start = buf.find("SESSION_INFO_NTF")
@@ -120,6 +167,7 @@ def reader_thread(ser: serial.Serial, q: Queue, running: threading.Event):
                         break
                     msg = buf[start:end+1]
                     buf = buf[end+1:]
+                    logging.debug("Verarbeitete Nachricht: %s", msg)
                     q.put(msg.replace("\n", " "))
             else:
                 time.sleep(READ_TIMEOUT)
@@ -161,7 +209,7 @@ def main():
                 distances = [dists[m] for m in macs]
                 pos = trilateration(anchors, distances)
                 if pos is not None:
-                    logging.info("x=%6.1f cm   y=%6.1f cm", *pos)
+                    logging.info("x=%6.1f cm   y=%6.1f cm   z=%6.1f cm", pos[0], pos[1], pos[2])
                     plot.update(pos)
         except KeyboardInterrupt:
             logging.info("Abbruch – fahre herunter …")
