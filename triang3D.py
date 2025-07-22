@@ -89,9 +89,7 @@ def trilateration(anchors: list[np.ndarray], d: list[float]) -> np.ndarray | Non
     y = (r1**2 - r3**2 + i**2 + j**2 - 2 * i * x) / (2 * j)
 
     z_squared = r1**2 - x**2 - y**2
-    if z_squared < -1e-2:
-        return None
-    elif z_squared < 0:
+    if z_squared < 0:
         z = -np.sqrt(-z_squared)
     else:
         z = np.sqrt(z_squared)
