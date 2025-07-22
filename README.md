@@ -8,9 +8,15 @@ This repository focuses on Ultra-Wideband (UWB) for indoor localization. A remot
 ## Software Structure
 
 - **Scripts**: Python scripts for data processing, trilateration, and visualization.
-  - `triang.py`: Main script for trilateration and live plotting.
-  - `serial_data/`: Contains scripts for serial communication and calibration.
-  - `processing/`: Includes modules for data processing and plotting.
+  - `scripts/README.md`: Contains an overview of the scripts and their usage.
+  - `scripts/raw_data/README.md`: Describes the raw serial data processing.
+
+- **Logging**: Scripts and files for logging and analysis.
+  - `logging/boxplot_statistics.py`: Generates boxplot statistics.
+  - `logging/log_triang.py`: Logs triangulation data.
+
+- **Measurements**: Contains calibrated and uncalibrated measurement data as well as scripts for evaluation.
+  - `scripts/raw_data/messungen/README.md`: Details about the measurements and their evaluation.
 
 ## Media
 
