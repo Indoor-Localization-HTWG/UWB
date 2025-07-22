@@ -21,11 +21,10 @@ options:
                         angeschlossen hast. Beispiel: '[2,3,4]'
 
 processor:
-  {plot,log,stat,triang}
+  {plot,log,stat}
     plot                Plottet die Distanzmessungen live auf einen Graph
     log                 Schreibt den Seriellen Output der UWB Module in die Konsole
     stat                Berechnet die Statistik über eine gegebene Zeit
-    triang              Trianguliert die Position des Initiators anhand der festen Responder und plottet diese live
 ```
 
 ### Processors hinzufügen
