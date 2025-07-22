@@ -13,7 +13,7 @@ stop_event = threading.Event()
 from processing import *
 
 def get_processors() -> list[UWBProcessor]:
-	return [PlotDistProcessor, LogProcessor, StatDistProcessor, TriangulationProcessor]
+	return [PlotDistProcessor, LogProcessor, StatDistProcessor]
 
 def start(command: str | None, baud: int = 115200, timeout: int = 1):
 	threads = start_threads(command, baud, timeout)
