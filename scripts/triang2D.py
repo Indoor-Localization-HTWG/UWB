@@ -57,25 +57,34 @@ def parse_distances(msg: str) -> dict[int, float] | None:
     return {int(mac, 16): float(dist) for mac, dist in matches}
 
 def trilateration(anchors: list[np.ndarray], d: list[float]) -> np.ndarray | None:
+    # Extrahiere die x- und y-Koordinaten der Anker
     (x1, y1), (x2, y2), (x3, y3) = anchors
+    # Extrahiere die Distanzen zu den Ankern
     r1, r2, r3 = d
-    A, B = 2*(x2 - x1), 2*(y2 - y1)
-    C = r1**2 - r2**2 - x1**2 + x2**2 - y1**2 + y2**2
-    D, E = 2*(x3 - x1), 2*(y3 - y1)
-    F = r1**2 - r3**2 - x1**2 + x3**2 - y1**2 + y3**2
-    denom = A*E - B*D
 
+    # Berechnung der Koeffizienten für die Gleichungssysteme
+    A, B = 2*(x2 - x1), 2*(y2 - y1)  # Koeffizienten für Anker 2
+    C = r1**2 - r2**2 - x1**2 + x2**2 - y1**2 + y2**2  # Konstante für Anker 2
+    D, E = 2*(x3 - x1), 2*(y3 - y1)  # Koeffizienten für Anker 3
+    F = r1**2 - r3**2 - x1**2 + x3**2 - y1**2 + y3**2  # Konstante für Anker 3
+    denom = A*E - B*D  # Berechnung des Determinantenwerts
+
+    # Debug-Log für die Berechnungsschritte
     logging.debug("Berechnungsschritte: A=%s, B=%s, C=%s, D=%s, E=%s, F=%s, denom=%s", A, B, C, D, E, F, denom)
 
+    # Überprüfung auf numerische Instabilität
     if abs(denom) < 1e-6:
         logging.warning("Numerische Instabilität: denom=%s", denom)
         return None
 
-    x = (C*E - F*B) / denom
-    y = (A*F - D*C) / denom
+    # Berechnung der x- und y-Koordinaten
+    x = (C*E - F*B) / denom  # x-Koordinate
+    y = (A*F - D*C) / denom  # y-Koordinate
 
+    # Debug-Log für die berechneten Werte
     logging.debug("Berechnete Werte: x=%s, y=%s", x, y)
 
+    # Rückgabe der berechneten Position als numpy-Array
     return np.array([x, y])
 
 # --------------------------------------------------------------------------- #

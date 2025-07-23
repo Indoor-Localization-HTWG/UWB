@@ -26,8 +26,8 @@ SERIAL_NUMBERS = {
 
 ANCHOR_POSITIONS = {
     0x0002: np.array([0.0, 0.0, 0.0]),        # rot
-    0x0003: np.array([0.0, -170, 40]),     # grün
-    0x0004: np.array([330, -85, -80]),      # ohne
+    0x0003: np.array([-100, -180, 80]),     # grün
+    0x0004: np.array([220, -85, -80]),      # ohne
 }
 
 BAUDRATE       = 115_200
@@ -60,45 +60,53 @@ def parse_distances(msg: str) -> dict[int, float] | None:
     return {int(mac, 16): float(dist) for mac, dist in matches}
 
 def trilateration(anchors: list[np.ndarray], d: list[float]) -> np.ndarray | None:
+    # Überprüfen, ob genau drei Anker und Distanzen übergeben wurden
     if len(anchors) != 3 or len(d) != 3:
         logging.warning("Trilateration braucht genau 3 Anker und Distanzen.")
         return None
 
+    # Ankerpositionen und Distanzen extrahieren
     P1, P2, P3 = anchors
     r1, r2, r3 = d
 
+    # Berechnung des Einheitsvektors zwischen Anker 1 und Anker 2
     ex = P2 - P1
-    distance = np.linalg.norm(ex)
+    distance = np.linalg.norm(ex)  # Abstand zwischen Anker 1 und Anker 2
     if distance == 0:
         logging.warning("Anker 1 und 2 sind identisch.")
         return None
-    ex /= distance
+    ex /= distance  # Normalisierung des Vektors
 
+    # Berechnung des zweiten Einheitsvektors basierend auf Anker 3
     temp = P3 - P1
-    i = np.dot(ex, temp)
-    temp2 = temp - i * ex
-    temp2_norm = np.linalg.norm(temp2)
+    i = np.dot(ex, temp)  # Projektion von temp auf ex
+    temp2 = temp - i * ex  # Orthogonale Komponente von temp zu ex
+    temp2_norm = np.linalg.norm(temp2)  # Norm der orthogonalen Komponente
     if temp2_norm == 0:
         logging.warning("Anker 3 liegt auf Linie zwischen Anker 1 und 2.")
         return None
-    ey = temp2 / temp2_norm
-    ez = np.cross(ex, ey)
+    ey = temp2 / temp2_norm  # Normalisierung des zweiten Einheitsvektors
+    ez = np.cross(ex, ey)  # Berechnung des dritten Einheitsvektors durch Kreuzprodukt
 
-    j = np.dot(ey, temp)
-    x = (r1**2 - r2**2 + distance**2) / (2 * distance)
-    y = (r1**2 - r3**2 + i**2 + j**2 - 2 * i * x) / (2 * j)
+    # Berechnung der Koordinaten x und y
+    j = np.dot(ey, temp)  # Projektion von temp auf ey
+    x = (r1**2 - r2**2 + distance**2) / (2 * distance)  # x-Koordinate
+    y = (r1**2 - r3**2 + i**2 + j**2 - 2 * i * x) / (2 * j)  # y-Koordinate
 
-    z_squared = r1**2 - x**2 - y**2
+    # Berechnung der z-Koordinate
+    z_squared = r1**2 - x**2 - y**2  # Quadrat der z-Koordinate
     if z_squared < 0:
-        z = -np.sqrt(-z_squared)
+        logging.warning("z_Wert negativ – Trilateration nicht möglich.")
+        logging.info("x=%f, y=%f, z^2=%f", x, y, z_squared)
+        return None
     else:
-        z = np.sqrt(z_squared)
+        z = np.sqrt(z_squared)  # z-Koordinate
 
-    # Zwei mögliche Lösungen
-    result_1 = P1 + x * ex + y * ey + z * ez
-    result_2 = P1 + x * ex + y * ey - z * ez
+    # Berechnung der zwei möglichen Lösungen
+    result_1 = P1 + x * ex + y * ey + z * ez  # Lösung 1
+    result_2 = P1 + x * ex + y * ey - z * ez  # Lösung 2
 
-    # Wähle den Punkt mit niedrigerem z-Wert (näher am Boden)
+    # Rückgabe der Lösung mit dem niedrigeren z-Wert (näher am Boden)
     return result_1 if result_1[2] < result_2[2] else result_2
 
 # --------------------------------------------------------------------------- #
