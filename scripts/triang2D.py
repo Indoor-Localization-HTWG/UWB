@@ -23,8 +23,8 @@ SERIAL_NUMBERS = {
 
 ANCHOR_POSITIONS = {
     0x0002: np.array([0.0, 0.0]),        # rot
-    0x0003: np.array([0.0, 250]),     # grün
-    0x0004: np.array([-180.0, 90]),      # ohne
+    0x0003: np.array([0.0, -310]),     # grün
+    0x0004: np.array([550.0, -160]),      # ohne
 }
 
 BAUDRATE       = 115_200
@@ -100,11 +100,20 @@ class LivePlot:
         (self.point,) = self.ax.plot([], [], "ro",  ms=8)
 
     def _setup_axes(self):
+        # Berechne die minimalen und maximalen Werte der Ankerpositionen
+        all_positions = np.array(list(ANCHOR_POSITIONS.values()))
+        x_min, y_min = np.min(all_positions, axis=0)
+        x_max, y_max = np.max(all_positions, axis=0)
+
+        # Setze die Achsengrenzen mit einem kleinen Puffer
+        padding = 50  # Puffer in cm
+        self.ax.set_xlim(x_min - padding, x_max + padding)
+        self.ax.set_ylim(y_min - padding, y_max + padding)
+
         for mac, pos in ANCHOR_POSITIONS.items():
             self.ax.scatter(*pos, marker="^", c="k", s=80, zorder=4)
             self.ax.text(pos[0]+3, pos[1]+3, f"{mac:04X}", fontsize=9)
-        self.ax.set_xlim(-300, 300)
-        self.ax.set_ylim(-300, 300)
+
         self.ax.set_aspect("equal", adjustable="box")
         self.ax.grid(True)
         self.ax.set_xlabel("x [cm]")
