@@ -26,12 +26,11 @@ messungen = {
 daten = {}
 for k, v in messungen.items():
 	try:
-		datei = path.join("messungen", v)
-		df = pd.read_csv(datei)
+		df = pd.read_csv(v)
 		werte = df.iloc[:, 1]  # Nur zweite Spalte (gemessene Distanz)
 		daten[k] = werte
 	except Exception as e:
-		print(f"Fehler beim Lesen von '{datei}': {e}")
+		print(f"Fehler beim Lesen von '{v}': {e}")
 
 def strip():
 	import seaborn as sns
