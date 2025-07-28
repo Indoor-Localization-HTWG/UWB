@@ -69,9 +69,6 @@ def trilateration(anchors: list[np.ndarray], d: list[float]) -> np.ndarray | Non
     F = r1**2 - r3**2 - x1**2 + x3**2 - y1**2 + y3**2  # Konstante für Anker 3
     denom = A*E - B*D  # Berechnung des Determinantenwerts
 
-    # Debug-Log für die Berechnungsschritte
-    logging.debug("Berechnungsschritte: A=%s, B=%s, C=%s, D=%s, E=%s, F=%s, denom=%s", A, B, C, D, E, F, denom)
-
     # Überprüfung auf numerische Instabilität
     if abs(denom) < 1e-6:
         logging.warning("Numerische Instabilität: denom=%s", denom)
