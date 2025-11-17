@@ -96,7 +96,10 @@ if __name__ == '__main__':
 		if args.cmd:
 			command = args.cmd
 		else:
-			command = f"INITF -MULTI -ADDR=1 -PADDR={args.remote_responders}"
+			if args.remote_responders is None:
+				command = None
+			else:
+				command = f"INITF -MULTI -ADDR=1 -PADDR={args.remote_responders}"
 		start(command=command, baud=args.baud, timeout=args.timeout)
 	except KeyboardInterrupt:
 		print("[GLOBAL] Tastaturabbruch erkannt")
